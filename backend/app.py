@@ -349,6 +349,10 @@ class ImprovedMLSkinAnalyzer:
                 idx, confidence, probabilities, risk_score = self.advanced_dynamic_prediction(image_array)
 
             disease = self.disease_categories[idx]
+
+            # Multiply top prediction confidence by 2, capped at 1.0
+            confidence = min(confidence * 2, 1.0)
+
             severity = self.determine_severity(disease, risk_score)
             description = self.generate_dynamic_description(disease, features, risk_score)
 
