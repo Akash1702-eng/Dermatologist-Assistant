@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
-
 import os
 import io
 import cv2
 import numpy as np
 import random
 import traceback
+import threading
+import requests
 from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from PIL import Image
-# Import json for dynamic class loading
-import json 
+import json
 from tensorflow.nn import softmax
 
 # ------------------------------
@@ -28,48 +28,40 @@ try:
     TF_AVAILABLE = True
 except Exception:
     TF_AVAILABLE = False
-    class MockSoftmax: 
+    class MockSoftmax:
         def __call__(self, x):
             x = np.array(x, dtype=np.float32)
             e_x = np.exp(x - np.max(x))
             return e_x / e_x.sum()
     softmax = MockSoftmax()
 
-# Import the ExplainabilityEngine from xai_explainer.py (must be present)
+# Import the ExplainabilityEngine from xai_explainer.py
 try:
     from backend.xai_explainer import ExplainabilityEngine
 except Exception as e:
-    # If import fails, create a minimal fallback to avoid runtime errors
     print("⚠️ Could not import xai_explainer.ExplainabilityEngine:", e)
     class ExplainabilityEngine:
         def __init__(self):
             print("⚠️ Fallback XAI engine initialized")
         def explain(self, image_array, prediction, classifier):
             return {
-                'heatmap': {'image_base64': '', 'description': 'XAI not available'}, 
-                'feature_importance': {'summary': 'XAI not available'}, 
-                'medical_reasoning': {'reasoning': f"Prediction: {prediction['disease']}. XAI not available"}, 
-                'confidence_breakdown': {}, 
+                'heatmap': {'image_base64': '', 'description': 'XAI not available'},
+                'feature_importance': {'summary': 'XAI not available'},
+                'medical_reasoning': {'reasoning': f"Prediction: {prediction['disease']}. XAI not available"},
+                'confidence_breakdown': {},
                 'risk_assessment': {}
             }
 
-# Initialize XAI engine
-xai_engine = ExplainabilityEngine()
 
 # ------------------------------
 # ImprovedMLSkinAnalyzer class
 # ------------------------------
 class ImprovedMLSkinAnalyzer:
     def __init__(self, model_path=None):
-        """
-        Initialize analyzer.
-        """
-        # Placeholder categories - will be overwritten if models/class_indices.json loads
         self.disease_categories = [
             "Actinic Keratosis", "Basal Cell Carcinoma", "Benign Keratosis",
             "Dermatofibroma", "Melanoma", "Melanocytic Nevi", "Vascular Lesion"
         ]
-
         self.model = None
         self.model_loaded = False
         self.model_path = model_path
@@ -82,36 +74,31 @@ class ImprovedMLSkinAnalyzer:
             os.path.join(MODELS_DIR, 'skin_model.keras')
         ]
         self._candidate_model_paths = [p for p in self._candidate_model_paths if p]
-
         self.load_model()
 
     def load_model(self):
-        """Try multiple model locations and load first that exists (requires TensorFlow/Class Map)."""
         if not TF_AVAILABLE:
             print("⚠️ TensorFlow not available — skipping model load, will use dynamic analysis")
             self.model_loaded = False
             return
-        
+
         for p in self._candidate_model_paths:
             try:
                 if os.path.exists(p):
                     self.model = load_model(p)
                     self.model_loaded = True
                     print(f"✅ ML Model loaded successfully from {p}")
-                    
-                    # DYNAMIC: Load dynamic class mapping
+
                     try:
                         class_indices_path = os.path.join(MODELS_DIR, 'class_indices.json')
                         with open(class_indices_path, 'r') as f:
                             str_diseases = json.load(f)
-                            # Convert dictionary keys back to integers
                             dynamic_categories = {int(k): v for k, v in str_diseases.items()}
-                            # Overwrite placeholder categories with dynamic ones, sorted by index
                             self.disease_categories = [dynamic_categories[i] for i in sorted(dynamic_categories.keys())]
                         print(f"✅ Dynamic class mapping loaded ({len(self.disease_categories)} classes)")
                     except Exception as e:
                         print(f"⚠️ Could not load class_indices.json. Using default categories. Error: {e}")
-                        
+
                     return
             except Exception as e:
                 print(f"⚠️ Failed to load model from {p}: {e}")
@@ -120,11 +107,7 @@ class ImprovedMLSkinAnalyzer:
         print("⚠️ No ML model found in candidate paths. Using advanced dynamic analysis.")
         self.model_loaded = False
 
-    # -----------------------
-    # Image preprocessing & helpers (Unchanged)
-    # -----------------------
     def preprocess_image(self, image_array):
-        # ... (Unchanged preprocessing logic) ...
         try:
             if image_array.ndim == 2:
                 image_array = cv2.cvtColor(image_array, cv2.COLOR_GRAY2RGB)
@@ -149,7 +132,6 @@ class ImprovedMLSkinAnalyzer:
                 return np.zeros((224, 224, 3), dtype=np.float32)
 
     def analyze_lesion_characteristics(self, image_array):
-        # ... (Unchanged feature extraction logic) ...
         try:
             img = image_array.copy()
             if img.ndim == 2:
@@ -173,8 +155,8 @@ class ImprovedMLSkinAnalyzer:
                 smoothness = float(cv2.Laplacian(gray, cv2.CV_64F).var())
             except Exception:
                 smoothness = float(np.var(gray))
-            
-            homogeneity = 0.5 # Default if skimage unavailable
+
+            homogeneity = 0.5
 
             edge_density = self.calculate_edge_density(gray)
             border_regularity = self.calculate_border_regularity(gray)
@@ -199,20 +181,27 @@ class ImprovedMLSkinAnalyzer:
         try:
             edges = cv2.Canny(gray_image, 50, 150)
             return float(np.sum(edges > 0) / edges.size)
-        except Exception: return 0.1
+        except Exception:
+            return 0.1
+
     def calculate_border_regularity(self, gray_image):
         try:
             edges = cv2.Canny(gray_image, 50, 150)
-            if np.sum(edges > 0) == 0: return 0.5
+            if np.sum(edges > 0) == 0:
+                return 0.5
             contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            if not contours: return 0.5
+            if not contours:
+                return 0.5
             largest = max(contours, key=cv2.contourArea)
             perimeter = cv2.arcLength(largest, True)
             area = cv2.contourArea(largest)
-            if area == 0: return 0.5
+            if area == 0:
+                return 0.5
             circularity = 4 * np.pi * area / (perimeter * perimeter)
             return float(min(circularity, 1.0))
-        except Exception: return 0.5
+        except Exception:
+            return 0.5
+
     def calculate_symmetry(self, gray_image):
         try:
             h, w = gray_image.shape
@@ -222,24 +211,31 @@ class ImprovedMLSkinAnalyzer:
             min_h = min(left.shape[0], right_flipped.shape[0])
             left = left[:min_h, :]
             right_flipped = right_flipped[:min_h, :]
-            if left.size == 0 or right_flipped.size == 0: return 0.5
+            if left.size == 0 or right_flipped.size == 0:
+                return 0.5
             mse = np.mean((left.astype(np.float32) - right_flipped.astype(np.float32)) ** 2)
             max_pixel = 255.0
             return float(1.0 - (mse / (max_pixel ** 2)))
-        except Exception: return 0.5
+        except Exception:
+            return 0.5
+
     def estimate_lesion_size(self, gray_image):
         try:
             _, thresh = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             lesion_pixels = np.sum(thresh < 128)
             total = gray_image.size
             return float(lesion_pixels / (total or 1))
-        except Exception: return 0.3
+        except Exception:
+            return 0.3
+
     def estimate_color_clusters(self, image_array):
         try:
             pixels = image_array.reshape(-1, 3)
             color_std = np.std(pixels, axis=0)
             return float(np.mean(color_std) / 100.0)
-        except Exception: return 0.5
+        except Exception:
+            return 0.5
+
     def get_default_features(self):
         return {
             'red_mean': 128, 'green_mean': 128, 'blue_mean': 128,
@@ -249,7 +245,8 @@ class ImprovedMLSkinAnalyzer:
             'color_uniformity': 0.5, 'symmetry_score': 0.5,
             'lesion_size_ratio': 0.3, 'color_clusters': 0.5
         }
-    def diagnose_from_features(self, features): # Unchanged
+
+    def diagnose_from_features(self, features):
         disease_patterns = {
             "Actinic Keratosis": {'color_score': features['red_mean'] > 140 and features['saturation'] < 100, 'texture_score': features['smoothness'] < 50, 'border_score': features['border_regularity'] > 0.6},
             "Basal Cell Carcinoma": {'color_score': features['red_mean'] > 150 and features['blue_mean'] < 100, 'texture_score': features['edge_density'] > 0.3, 'border_score': features['border_regularity'] < 0.4},
@@ -270,20 +267,25 @@ class ImprovedMLSkinAnalyzer:
             elif disease == "Basal Cell Carcinoma" and features['brightness'] > 150: score += 0.2
             disease_scores[disease] = min(score, 1.0)
         return disease_scores
-    def generate_dynamic_probabilities(self, disease_scores): # Unchanged
+
+    def generate_dynamic_probabilities(self, disease_scores):
         total_score = sum(disease_scores.values())
-        if total_score == 0: return {d: 1.0/len(self.disease_categories) for d in self.disease_categories}
+        if total_score == 0:
+            return {d: 1.0/len(self.disease_categories) for d in self.disease_categories}
         probs = {d: s / (total_score or 1.0) for d, s in disease_scores.items()}
-        for d in probs: probs[d] = probs[d] * random.uniform(0.8, 1.2)
+        for d in probs:
+            probs[d] = probs[d] * random.uniform(0.8, 1.2)
         total = sum(probs.values())
         return {k: float(v/total) for k, v in probs.items()}
-    def determine_severity(self, disease, risk_score): # Unchanged
+
+    def determine_severity(self, disease, risk_score):
         high = ["Melanoma", "Basal Cell Carcinoma"]
         medium = ["Actinic Keratosis"]
         if disease in high: return "High"
         elif disease in medium: return "Medium"
         else: return "Low"
-    def _ensure_probs(self, raw_pred): # Uses the dynamic 'softmax'
+
+    def _ensure_probs(self, raw_pred):
         try:
             probs = np.array(raw_pred, dtype=np.float32)
             s = probs.sum()
@@ -293,25 +295,24 @@ class ImprovedMLSkinAnalyzer:
         except Exception:
             probs = np.clip(np.array(raw_pred, dtype=np.float32), 0, None)
             return probs / (probs.sum() or 1)
-            
+
     def predict_with_model(self, image_array):
-        """If a TF model is loaded, use it to predict with proper preprocessing."""
         if not self.model_loaded or self.model is None:
             raise RuntimeError("Model is not loaded")
         if len(self.disease_categories) == 0:
             raise RuntimeError("Disease categories not initialized/loaded")
-            
+
         try:
             processed = self.preprocess_image(image_array)
             batch = np.expand_dims(processed, axis=0)
             raw = self.model.predict(batch, verbose=0)
-            
+
             if isinstance(raw, (list, tuple)): raw = raw[0]
             if raw.ndim == 2: raw = raw[0]
 
             probs = self._ensure_probs(raw)
             if len(probs) != len(self.disease_categories):
-                 raise RuntimeError(f"Model output size ({len(probs)}) does not match dynamic classes ({len(self.disease_categories)}).")
+                raise RuntimeError(f"Model output size ({len(probs)}) does not match dynamic classes ({len(self.disease_categories)}).")
 
             idx = int(np.argmax(probs))
             confidence = float(probs[idx])
@@ -321,22 +322,20 @@ class ImprovedMLSkinAnalyzer:
             raise RuntimeError(f"Model prediction error: {e}")
 
     def advanced_dynamic_prediction(self, image_array):
-        """Fallback: produce dynamic, rule-based prediction + risk score."""
         features = self.analyze_lesion_characteristics(image_array)
         disease_scores = self.diagnose_from_features(features)
         probabilities = self.generate_dynamic_probabilities(disease_scores)
         primary, confidence = max(probabilities.items(), key=lambda x: x[1])
         risk_score = disease_scores.get(primary, confidence)
-        
+
         try:
-             idx = self.disease_categories.index(primary)
+            idx = self.disease_categories.index(primary)
         except ValueError:
-             idx = 0 
-        
+            idx = 0
+
         return idx, float(confidence), probabilities, float(risk_score)
 
     def predict(self, image_array):
-        """Unified predict: returns response dict ready for JSON serialization."""
         try:
             features = self.analyze_lesion_characteristics(image_array)
 
@@ -351,10 +350,8 @@ class ImprovedMLSkinAnalyzer:
 
             disease = self.disease_categories[idx]
             severity = self.determine_severity(disease, risk_score)
-
             description = self.generate_dynamic_description(disease, features, risk_score)
 
-            # NOTE: Maps are placed here for brevity, they are unchanged from the user input
             risk_factors_map = {
                 "Actinic Keratosis": ["Long-term sun exposure", "Fair skin", "Age over 40", "Outdoor occupation"],
                 "Basal Cell Carcinoma": ["Chronic sun exposure", "Fair complexion", "Age over 50", "Light hair/eyes"],
@@ -441,20 +438,17 @@ class ImprovedMLSkinAnalyzer:
         }
         return base_descriptions.get(disease, "Computer vision analysis based on multiple feature extraction.")
 
+
 # ------------------------------
-# Flask app and routes
+# Flask app — single definition
 # ------------------------------
 app = Flask(__name__)
 CORS(app)
 
-# ------------------------------
-# Flask app and routes
-# ------------------------------
-app = Flask(__name__)
-CORS(app)
 
-import requests
-
+# ------------------------------
+# Model download helper
+# ------------------------------
 def download_model_files():
     os.makedirs(MODELS_DIR, exist_ok=True)
 
@@ -465,28 +459,82 @@ def download_model_files():
     class_path = os.path.join(MODELS_DIR, "class_indices.json")
 
     if not os.path.exists(model_path):
-        print("⬇ Downloading skin_model.h5...")
-        r = requests.get(model_url)
-        open(model_path, "wb").write(r.content)
+        print("⬇️ Downloading skin_model.h5...")
+        try:
+            r = requests.get(model_url, timeout=300, stream=True)
+            r.raise_for_status()
+            with open(model_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            print("✅ skin_model.h5 downloaded successfully")
+        except Exception as e:
+            print(f"❌ Failed to download skin_model.h5: {e}")
 
     if not os.path.exists(class_path):
-        print("⬇ Downloading class_indices.json...")
-        r = requests.get(class_url)
-        open(class_path, "wb").write(r.content)
+        print("⬇️ Downloading class_indices.json...")
+        try:
+            r = requests.get(class_url, timeout=30)
+            r.raise_for_status()
+            with open(class_path, "wb") as f:
+                f.write(r.content)
+            print("✅ class_indices.json downloaded successfully")
+        except Exception as e:
+            print(f"❌ Failed to download class_indices.json: {e}")
 
-download_model_files()
 
-# Initialize analyzer (attempt to load model if present)
-analyzer = ImprovedMLSkinAnalyzer()
+# ------------------------------
+# Initialize analyzer immediately with defaults (no model yet)
+# Model is loaded in background after server starts
+# ------------------------------
+analyzer = ImprovedMLSkinAnalyzer.__new__(ImprovedMLSkinAnalyzer)
+analyzer.model = None
+analyzer.model_loaded = False
+analyzer.model_path = None
+analyzer.disease_categories = [
+    "Actinic Keratosis", "Basal Cell Carcinoma", "Benign Keratosis",
+    "Dermatofibroma", "Melanoma", "Melanocytic Nevi", "Vascular Lesion"
+]
+analyzer._candidate_model_paths = [
+    os.path.join(MODELS_DIR, 'skin_model.h5'),
+    os.path.join(MODELS_DIR, 'skin_model_fixed.h5'),
+    os.path.join(MODELS_DIR, 'skin_model_enhanced.h5'),
+    os.path.join(MODELS_DIR, 'best_skin_model.h5'),
+    os.path.join(MODELS_DIR, 'skin_model.keras')
+]
+
 # Initialize XAI engine
 xai_engine = ExplainabilityEngine()
 
+
+def background_model_loader():
+    """Download model files and initialize the analyzer in the background."""
+    print("🔄 Background loader started: downloading model files...")
+    download_model_files()
+    print("🔄 Background loader: initializing analyzer with model...")
+    try:
+        analyzer.__init__()
+        print(f"✅ Background loader complete. Model loaded: {analyzer.model_loaded}")
+    except Exception as e:
+        print(f"❌ Background loader failed during analyzer init: {e}")
+        traceback.print_exc()
+
+
+# Start background thread — server binds to port immediately, model loads after
+_loader_thread = threading.Thread(target=background_model_loader, daemon=True)
+_loader_thread.start()
+
+
+# ------------------------------
+# Routes
+# ------------------------------
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({
         "message": "Advanced Skin Analysis API is running!",
+        "model_ready": analyzer.model_loaded,
         "endpoints": ["/health", "/predict", "/explain"]
     })
+
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -498,16 +546,13 @@ def health():
         "disease_classes": len(analyzer.disease_categories)
     }), 200
 
+
 def read_image_from_request(file_storage):
-    """
-    Read uploaded file (Flask FileStorage) and return RGB numpy array.
-    """
     try:
         img = Image.open(file_storage.stream).convert('RGB')
         arr = np.array(img)
         return arr
-    except Exception as e:
-        # fallback: read bytes and attempt via cv2
+    except Exception:
         try:
             data = file_storage.read()
             nparr = np.frombuffer(data, np.uint8)
@@ -519,11 +564,9 @@ def read_image_from_request(file_storage):
         except Exception as e2:
             raise ValueError("Failed to read image: " + str(e2))
 
+
 @app.route('/predict', methods=['POST'])
 def predict_route():
-    """
-    Primary prediction endpoint: returns prediction JSON (prediction + analysis metadata).
-    """
     try:
         if 'image' not in request.files:
             return jsonify({'error': 'No image uploaded (use form key "image")'}), 400
@@ -533,13 +576,11 @@ def predict_route():
             return jsonify({'error': 'Empty filename'}), 400
 
         image_array = read_image_from_request(file)
-
-        # Run prediction (analyzer returns structured response)
         result = analyzer.predict(image_array)
+
         if "error" in result:
             return jsonify(result), 500
 
-        # Optionally attach XAI
         with_xai = request.args.get('with_xai', '0') in ('1', 'true', 'yes')
         if with_xai:
             try:
@@ -561,11 +602,9 @@ def predict_route():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/explain', methods=['POST'])
 def explain_route():
-    """
-    Explicit explanation endpoint.
-    """
     try:
         if 'image' not in request.files:
             return jsonify({'error': 'No image uploaded (use form key "image")'}), 400
@@ -573,17 +612,14 @@ def explain_route():
         file = request.files['image']
         image_array = read_image_from_request(file)
 
-        # get base prediction (for disease & confidence)
         analysis = analyzer.predict(image_array)
         if 'error' in analysis:
             return jsonify(analysis), 500
 
         primary = analysis['prediction']['primary']
         simple_pred = {'disease': primary['disease'], 'confidence': float(primary['confidence'])}
-
         explanations = xai_engine.explain(image_array, simple_pred, analyzer)
 
-        # return combined
         return jsonify({
             'prediction': analysis['prediction'],
             'analysis': analysis['analysis'],
@@ -596,25 +632,20 @@ def explain_route():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-# ------------------------------
-# Utility route: health-check + model reload
-# ------------------------------
+
 @app.route('/reload-model', methods=['POST'])
 def reload_model():
-    """
-    Reload model from disk (useful for updating files without restarting the server).
-    """
     try:
         payload = request.get_json(silent=True) or {}
         new_path = payload.get('path')
         if new_path:
             analyzer._candidate_model_paths.insert(0, new_path)
-
         analyzer.load_model()
         return jsonify({'status': 'reloaded', 'model_loaded': analyzer.model_loaded}), 200
     except Exception as e:
         print("❌ reload-model error:", e)
         return jsonify({'error': str(e)}), 500
+
 
 # ------------------------------
 # Run server
@@ -623,8 +654,7 @@ if __name__ == '__main__':
     print("\n" + "="*60)
     print("🚀 Starting Advanced Skin Analysis Server")
     print("="*60)
-    print(f"🔬 Analysis Mode: {'ML Model' if analyzer.model_loaded else 'Advanced Dynamic Analysis'}")
-    print(f"🎯 Disease Classes: {len(analyzer.disease_categories)}")
+    print("🔄 Model will load in background after server starts")
     print("="*60)
 
     port = int(os.environ.get("PORT", 5000))
