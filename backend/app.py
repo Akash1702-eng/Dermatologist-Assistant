@@ -447,6 +447,35 @@ class ImprovedMLSkinAnalyzer:
 app = Flask(__name__)
 CORS(app)
 
+# ------------------------------
+# Flask app and routes
+# ------------------------------
+app = Flask(__name__)
+CORS(app)
+
+import requests
+
+def download_model_files():
+    os.makedirs(MODELS_DIR, exist_ok=True)
+
+    model_url = "https://huggingface.co/akash1702-eng/skin-model/resolve/main/skin_model.h5"
+    class_url = "https://huggingface.co/akash1702-eng/skin-model/resolve/main/class_indices.json"
+
+    model_path = os.path.join(MODELS_DIR, "skin_model.h5")
+    class_path = os.path.join(MODELS_DIR, "class_indices.json")
+
+    if not os.path.exists(model_path):
+        print("⬇ Downloading skin_model.h5...")
+        r = requests.get(model_url)
+        open(model_path, "wb").write(r.content)
+
+    if not os.path.exists(class_path):
+        print("⬇ Downloading class_indices.json...")
+        r = requests.get(class_url)
+        open(class_path, "wb").write(r.content)
+
+download_model_files()
+
 # Initialize analyzer (attempt to load model if present)
 analyzer = ImprovedMLSkinAnalyzer()
 # Initialize XAI engine
