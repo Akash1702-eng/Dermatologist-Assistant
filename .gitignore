@@ -1,0 +1,23 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/dataset/
+backend/models/
+
+# Root models (if exists)
+models/
+
+# Node
+frontend/node_modules/
+
+# Images
+test_images/
+
+# Env
+.env
+
+# IDE
+.vscode/
+
+# General
+*.pyc

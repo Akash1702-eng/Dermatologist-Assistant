@@ -1,0 +1,383 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+.app {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 900px;
+    width: 100%;
+    overflow: hidden;
+    margin: 20px;
+}
+
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px 30px;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.header p {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+.main-content {
+    padding: 40px 30px;
+}
+
+.upload-section {
+    margin-bottom: 40px;
+}
+
+.upload-box {
+    position: relative;
+    border: 3px dashed #667eea;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #f8f9ff;
+}
+
+.upload-box:hover {
+    border-color: #764ba2;
+    background: #f0f1ff;
+}
+
+.upload-box input {
+    display: none;
+}
+
+.upload-box label {
+    display: block;
+    cursor: pointer;
+}
+
+.upload-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.upload-box h3 {
+    font-size: 1.3em;
+    color: #667eea;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.upload-box p {
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.file-types {
+    font-size: 0.9em;
+    color: #888;
+}
+
+.preview {
+    margin: 20px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    text-align: center;
+}
+
+.preview img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.analyze-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s;
+    margin-top: 20px;
+}
+
+.analyze-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+}
+
+.analyze-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #667eea;
+    font-size: 1.1em;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.error {
+    background: #fee;
+    color: #c33;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+    border-left: 4px solid #c33;
+}
+
+.results-section {
+    margin-top: 40px;
+}
+
+.result-card {
+    background: #f8f9ff;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.result-card h2 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    margin: 0;
+}
+
+.result-card>div {
+    padding: 25px 30px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.result-card>div:last-child {
+    border-bottom: none;
+}
+
+.prediction-box {
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    border-radius: 10px;
+}
+
+.disease-name {
+    font-size: 2em;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 15px;
+}
+
+.confidence {
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.severity {
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.severity-high {
+    background: #fee;
+    color: #c33;
+}
+
+.severity-medium {
+    background: #ffe;
+    color: #da8e00;
+}
+
+.severity-low {
+    background: #efe;
+    color: #3c3;
+}
+
+.explanation-box h3,
+.features-box h3,
+.heatmap-box h3,
+.probabilities-box h3,
+.precautions-box h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+.features-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.feature-item {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.feature-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.feature-value {
+    font-size: 1.4em;
+    color: #667eea;
+    font-weight: bold;
+}
+
+.feature-influence {
+    font-size: 0.9em;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.influence-high {
+    background: #ffe;
+    color: #da8e00;
+}
+
+.influence-low {
+    background: #efe;
+    color: #3c3;
+}
+
+.heatmap-box img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 15px;
+    border: 2px solid #e0e0e0;
+}
+
+.heatmap-explanation {
+    color: #666;
+    font-size: 0.95em;
+    margin-bottom: 15px;
+}
+
+.probability-bar {
+    display: grid;
+    grid-template-columns: 150px 1fr 80px;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.bar {
+    height: 25px;
+    background: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.3s;
+    border-radius: 5px;
+}
+
+.precautions-box ul {
+    list-style: none;
+}
+
+.precautions-box li {
+    padding: 12px 0;
+    padding-left: 30px;
+    position: relative;
+    color: #555;
+}
+
+.precautions-box li:before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #3c3;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.disclaimer {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    font-size: 0.9em;
+}
+
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 1.8em;
+    }
+
+    .main-content {
+        padding: 20px;
+    }
+
+    .features-list {
+        grid-template-columns: 1fr;
+    }
+
+    .probability-bar {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+}
