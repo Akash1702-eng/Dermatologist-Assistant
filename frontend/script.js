@@ -13,7 +13,7 @@ const error = document.getElementById('error');
 const resultsSection = document.getElementById('resultsSection');
 
 // API Configuration
-const API_BASE = "http://127.0.0.1:5000";
+const API_BASE = "https://dermatologist-assistant-w6o3.onrender.com";
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', initializeApp);
@@ -187,7 +187,7 @@ function displayAdvancedResults(data) {
     const explanations = data.explanations;
 
     // Update primary diagnosis
-    updatePrimaryDiagnosis(prediction);
+    updatePrimaryDiagnosis(prediction.primary);
     
     // Update XAI tabs
     updateMedicalReasoningTab(explanations.medical_reasoning);
@@ -197,23 +197,26 @@ function displayAdvancedResults(data) {
     updateHeatmapTab(explanations.heatmap);
     
     // Update additional sections
-    updateProbabilityDistribution(prediction.all_probabilities, prediction.disease);
+    updateProbabilityDistribution(
+    Object.fromEntries(
+        prediction.all_predictions.map(p => [p.disease, p.confidence])
+    ),
+    prediction.primary.disease
+    );
     updatePrecautions(prediction.precautions);
     updateRiskFactors(prediction.risk_factors);
     
     showResults();
 }
 
-function updatePrimaryDiagnosis(prediction) {
-    document.getElementById('diseaseName').textContent = prediction.disease;
+function updatePrimaryDiagnosis(primary) {
+    document.getElementById('diseaseName').textContent = primary.disease;
     document.getElementById('confidence').textContent = 
-        `AI Confidence: ${(prediction.confidence * 100).toFixed(1)}%`;
+        `AI Confidence: ${(primary.confidence * 100).toFixed(1)}%`;
     
     const severityElement = document.getElementById('severity');
-    severityElement.textContent = `Severity: ${prediction.severity}`;
-    severityElement.className = `severity severity-${prediction.severity.toLowerCase()}`;
-    
-    document.getElementById('description').textContent = prediction.description;
+    severityElement.textContent = `Severity: ${primary.severity}`;
+    severityElement.className = `severity severity-${primary.severity.toLowerCase()}`;
 }
 
 function updateMedicalReasoningTab(medicalReasoning) {
