@@ -4,380 +4,698 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medical Skin Analysis AI</title>
-    <script src="./script.js"></script>
+    <title>DermAI · Advanced Skin Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #60a5fa;
+            --secondary: #7c3aed;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gradient-1: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            --gradient-2: linear-gradient(135deg, #10b981 0%, #2563eb 100%);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1);
+            --border-radius: 16px;
         }
 
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 24px;
+            line-height: 1.5;
+            color: var(--dark);
         }
 
+        /* Import Inter font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
         .container {
-            max-width: 1200px;
+            max-width: 1440px;
             margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Header Styles */
+        .header {
+            background: var(--gradient-1);
+            color: white;
+            padding: 40px 48px;
+            position: relative;
             overflow: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            position: relative;
+            letter-spacing: -0.02em;
+        }
+
+        .header h1 span {
+            background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .header p {
+            font-size: 1.2em;
             opacity: 0.9;
-            font-size: 1.1em;
+            position: relative;
+            max-width: 600px;
         }
 
+        .header-badge {
+            position: absolute;
+            top: 40px;
+            right: 48px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.9em;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* Content Styles */
         .content {
-            padding: 30px;
+            padding: 40px 48px;
         }
 
+        /* Connection Status */
+        .status-message {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-success {
+            background: #ecfdf5;
+            color: #065f46;
+            border-left: 4px solid var(--success);
+        }
+
+        .status-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+        }
+
+        /* Patient Info Card */
         .patient-info {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid #e2e8f0;
+        }
+
+        .patient-info h3 {
+            font-size: 1.4em;
             margin-bottom: 20px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .info-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 0;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: 600;
-            color: #333;
+            color: var(--dark);
+            font-size: 0.95em;
         }
 
         .form-group input,
         .form-group select {
             width: 100%;
-            padding: 10px;
-            border: 2px solid #e1e5e9;
-            border-radius: 6px;
-            font-size: 14px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.2s ease;
+            background: white;
         }
 
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        /* Upload Section */
         .upload-section {
-            border: 3px dashed #6a11cb;
-            border-radius: 10px;
-            padding: 40px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 24px;
+            padding: 48px;
             text-align: center;
-            margin-bottom: 30px;
-            background: #f8f9fa;
-        }
-
-        .upload-icon {
-            font-size: 3em;
-            margin-bottom: 20px;
-        }
-
-        .file-input {
-            margin: 20px 0;
-        }
-
-        .analyze-btn {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1em;
-            border-radius: 8px;
+            margin-bottom: 32px;
+            border: 2px dashed var(--primary-light);
+            transition: all 0.3s ease;
             cursor: pointer;
-            transition: transform 0.2s;
         }
 
-        .analyze-btn:hover {
+        .upload-section:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
             transform: translateY(-2px);
         }
 
-        .analyze-btn:disabled {
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upload-section h2 {
+            font-size: 2em;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+
+        .upload-section p {
+            color: var(--gray);
+            margin-bottom: 24px;
+            font-size: 1.1em;
+        }
+
+        .file-input-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 24px 0;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 40px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
 
-        .result-section {
+        .btn-outline {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary-light);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .image-preview-container {
+            max-width: 400px;
+            margin: 24px auto;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            border: 3px solid white;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            text-align: center;
+            margin: 32px 0;
+            padding: 40px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 24px;
+        }
+
+        .step {
+            text-align: center;
+            color: var(--gray);
+            position: relative;
+        }
+
+        .step.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -40px;
+            width: 40px;
+            height: 2px;
+            background: #e2e8f0;
+        }
+
+        .step:last-child::after {
             display: none;
+        }
+
+        /* Results Section */
+        .result-section {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: var(--dark);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .model-info {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 20px 24px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .model-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.9em;
         }
 
         .result-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
         }
 
         .result-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            border-left: 4px solid #2575fc;
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
         }
 
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .result-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+
+        .metric-label {
+            color: var(--gray);
+            font-size: 0.95em;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-1);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        /* Risk Badges */
         .risk-high {
-            border-left-color: #dc3545;
-            background: #ffe6e6;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.9em;
+            font-weight: 600;
         }
 
         .risk-medium {
-            border-left-color: #fd7e14;
-            background: #fff3e6;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.9em;
+            font-weight: 600;
         }
 
         .risk-low {
-            border-left-color: #198754;
-            background: #e6ffe6;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.9em;
+            font-weight: 600;
         }
 
-        .confidence-bar {
-            height: 10px;
-            background: #e9ecef;
-            border-radius: 5px;
-            margin: 10px 0;
+        /* Feature Tags */
+        .feature-tag {
+            display: inline-block;
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-size: 0.9em;
+            margin: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* XAI Grid */
+        .xai-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .heatmap-container {
+            position: relative;
+            border-radius: 12px;
             overflow: hidden;
+            margin: 16px 0;
         }
 
-        .confidence-fill {
+        .heatmap-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, #6a11cb, #2575fc);
-            border-radius: 5px;
-            width: 0%;
-            transition: width 1s ease-in-out;
+            background: linear-gradient(135deg, rgba(37,99,235,0.2) 0%, rgba(124,58,237,0.2) 100%);
+            pointer-events: none;
         }
 
-        .loading {
-            display: none;
-            text-align: center;
+        /* Chart Container */
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        /* Recommendation Items */
+        .recommendation-item {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 8px 0;
+            border-left: 4px solid var(--primary);
+            transition: all 0.2s ease;
+        }
+
+        .recommendation-item:hover {
+            transform: translateX(4px);
+            background: #f1f5f9;
+        }
+
+        .recommendation-urgent {
+            border-left-color: var(--danger);
+            background: #fef2f2;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .content {
+                padding: 24px;
+            }
+            
+            .header {
+                padding: 32px 24px;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .xai-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            
+            .header {
+                padding: 24px 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .header-badge {
+                position: static;
+                display: inline-block;
+                margin-top: 16px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .upload-section {
+                padding: 32px 20px;
+            }
+            
+            .upload-section h2 {
+                font-size: 1.5em;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .progress-steps {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .step::after {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .file-input-wrapper {
+                flex-direction: column;
+            }
+            
+            .model-info {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        /* Stats Card */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
             margin: 20px 0;
         }
 
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #6a11cb;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .severity-high {
-            color: #dc3545;
-            font-weight: bold;
-        }
-
-        .severity-medium {
-            color: #fd7e14;
-            font-weight: bold;
-        }
-
-        .severity-low {
-            color: #198754;
-            font-weight: bold;
-        }
-
-        .image-preview {
-            max-width: 300px;
-            max-height: 300px;
-            margin: 15px auto;
-            border-radius: 8px;
-            display: none;
-        }
-
-        .recommendation-item {
-            background: white;
-            margin: 10px 0;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #28a745;
-        }
-
-        .urgent-item {
-            border-left-color: #dc3545;
-            background: #fff5f5;
-        }
-
-        .prediction-item {
-            padding: 8px 12px;
-            margin: 5px 0;
-            background: white;
-            border-radius: 6px;
-            border-left: 3px solid #6a11cb;
-        }
-
-        .feature-badge {
-            display: inline-block;
-            background: #e9ecef;
-            padding: 4px 8px;
+        .stat-card {
+            background: #f8fafc;
+            padding: 16px;
             border-radius: 12px;
-            font-size: 12px;
-            margin: 2px;
+            text-align: center;
         }
 
-        .status-message {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid;
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary);
         }
 
-        .status-success {
-            background: #e6ffe6;
-            color: #198754;
-            border-color: #198754;
-        }
-
-        .status-error {
-            background: #ffe6e6;
-            color: #dc3545;
-            border-color: #dc3545;
-        }
-
-        .probability-bar {
-            height: 6px;
-            background: #e9ecef;
-            border-radius: 3px;
-            margin: 5px 0;
-            overflow: hidden;
-        }
-
-        .probability-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #6a11cb, #2575fc);
-            border-radius: 3px;
-        }
-
-        .model-info {
-            background: #e9ecef;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin: 10px 0;
+        .stat-label {
+            color: var(--gray);
             font-size: 0.9em;
-            color: #666;
-        }
-
-        .analysis-feature {
-            background: white;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 6px;
-            border-left: 3px solid #6a11cb;
-        }
-
-        .risk-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-            margin: 2px;
-        }
-
-        .risk-high-badge {
-            background: #dc3545;
-            color: white;
-        }
-
-        .risk-medium-badge {
-            background: #fd7e14;
-            color: white;
-        }
-
-        .risk-low-badge {
-            background: #198754;
-            color: white;
-        }
-
-        /* XAI Specific Styles */
-        .xai-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .xai-feature-item {
-            background: white;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 6px;
-            border-left: 3px solid #6a11cb;
-        }
-
-        .xai-feature-positive {
-            border-left-color: #28a745;
-            background: #e6ffe6;
-        }
-
-        .xai-feature-negative {
-            border-left-color: #dc3545;
-            background: #ffe6e6;
-        }
-
-        .attention-region {
-            display: inline-block;
-            padding: 4px 8px;
-            margin: 2px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            color: white;
-        }
-
-        .region-high {
-            background: #dc3545;
-        }
-
-        .region-medium {
-            background: #fd7e14;
-        }
-
-        .region-low {
-            background: #198754;
-        }
-
-        .interpretation-guide {
-            background: #e6f3ff;
-            padding: 12px;
-            border-radius: 6px;
-            border-left: 4px solid #2575fc;
-            margin: 15px 0;
         }
     </style>
 </head>
@@ -385,242 +703,206 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🧬 Medical Skin Analysis AI</h1>
-            <p>Dynamic ML Analysis with Real-time Feature Detection</p>
+            <h1>Derm<span>AI</span></h1>
+            <p>Advanced skin analysis powered by deep learning and explainable AI</p>
+            <div class="header-badge">
+                ⚡ Real-time Analysis · v2.0
+            </div>
         </div>
 
         <div class="content">
             <!-- Connection Status -->
-            <div id="connectionStatus" class="status-message status-error">
-                ⚠️ Checking backend connection...
+            <div id="connectionStatus" class="status-message">
+                🔄 Checking backend connection...
             </div>
 
-            <!-- Patient Information Section -->
+            <!-- Patient Information -->
             <div class="patient-info">
-                <h3>👤 Patient Information (Optional)</h3>
+                <h3>
+                    <span>👤</span> Patient Demographics
+                </h3>
                 <div class="info-grid">
                     <div class="form-group">
-                        <label for="patientAge">Age</label>
+                        <label>Age</label>
                         <input type="number" id="patientAge" placeholder="Enter age" min="1" max="120">
                     </div>
                     <div class="form-group">
-                        <label for="skinType">Skin Type</label>
+                        <label>Skin Type (Fitzpatrick)</label>
                         <select id="skinType">
                             <option value="">Select skin type</option>
-                            <option value="fair">Fair/Light</option>
-                            <option value="medium">Medium</option>
-                            <option value="olive">Olive</option>
-                            <option value="brown">Brown</option>
-                            <option value="dark">Dark</option>
+                            <option value="I">Type I - Pale white, always burns</option>
+                            <option value="II">Type II - White, usually burns</option>
+                            <option value="III">Type III - White to olive, sometimes burns</option>
+                            <option value="IV">Type IV - Brown, rarely burns</option>
+                            <option value="V">Type V - Dark brown, very rarely burns</option>
+                            <option value="VI">Type VI - Deeply pigmented, never burns</option>
                         </select>
                     </div>
                 </div>
             </div>
 
             <!-- Upload Section -->
-            <div class="upload-section">
-                <div class="upload-icon">📁</div>
-                <h2>Upload Skin Image for Analysis</h2>
-                <p>Dynamic ML Model + Real-time Feature Analysis + Medical Recommendations</p>
-
-                <div class="file-input">
+            <div class="upload-section" onclick="document.getElementById('imageInput').click()">
+                <div class="upload-icon">📸</div>
+                <h2>Upload Skin Image</h2>
+                <p>Supported formats: JPEG, PNG, WEBP (Max 10MB)</p>
+                
+                <div class="file-input-wrapper">
                     <input type="file" id="imageInput" accept="image/*" style="display: none;">
-                    <button onclick="document.getElementById('imageInput').click()"
-                        style="background: #6a11cb; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer;">
-                        📸 Choose Skin Image
+                    <button class="btn btn-outline" onclick="event.stopPropagation(); document.getElementById('imageInput').click()">
+                        📁 Choose Image
                     </button>
-                    <div id="fileName" style="margin-top: 10px; color: #666;"></div>
+                    <button class="btn btn-primary" onclick="event.stopPropagation(); analyzeImage()" id="analyzeBtn">
+                        🔬 Analyze Now
+                    </button>
                 </div>
 
-                <img id="imagePreview" class="image-preview" alt="Image preview">
+                <div id="fileName" style="margin-top: 12px; color: var(--gray);"></div>
 
-                <button class="analyze-btn" onclick="analyzeImage()" id="analyzeBtn">
-                    🔬 Run Dynamic ML Analysis
-                </button>
+                <div class="image-preview-container" id="previewContainer" style="display: none;">
+                    <img id="imagePreview" class="image-preview" alt="Preview">
+                </div>
             </div>
 
-            <!-- Loading -->
+            <!-- Loading State -->
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <p>Dynamic ML Analysis in Progress...</p>
-                <p style="font-size: 0.9em; color: #666;">
-                    Analyzing image features, color patterns, texture, and borders in real-time
-                </p>
+                <h3>Analyzing Your Image</h3>
+                <p style="color: var(--gray); margin-bottom: 24px;">This will take just a moment</p>
+                
+                <div class="progress-steps">
+                    <div class="step active">📸 Image Processing</div>
+                    <div class="step">🧠 ML Analysis</div>
+                    <div class="step">🔍 Feature Detection</div>
+                    <div class="step">📊 Generating Report</div>
+                </div>
             </div>
 
             <!-- Results Section -->
-            <div class="result-section" id="resultSection">
-                <h2>🔍 Dynamic ML Analysis Results</h2>
+            <div class="result-section" id="resultSection" style="display: none;">
+                <h2 class="section-title">
+                    <span>📋</span> Analysis Report
+                </h2>
 
-                <!-- Model Information -->
+                <!-- Model Info -->
                 <div class="model-info" id="modelInfo">
-                    Dynamic Analysis Loading...
+                    <span>🤖 Loading model information...</span>
+                    <span class="model-badge">Deep Learning v2.0</span>
                 </div>
 
+                <!-- Key Metrics Grid -->
                 <div class="result-grid">
                     <!-- Primary Diagnosis -->
                     <div class="result-card" id="diagnosisCard">
                         <h3>🎯 Primary Diagnosis</h3>
-                        <div style="margin-top: 15px;">
-                            <strong>Condition:</strong>
-                            <span id="disease" style="font-size: 1.2em; font-weight: bold;">-</span>
+                        <div style="margin-bottom: 20px;">
+                            <div class="metric-value" id="disease">-</div>
+                            <div class="metric-label">Detected Condition</div>
                         </div>
-                        <div style="margin: 10px 0;">
-                            <strong>Model Confidence:</strong>
-                            <span id="confidence">-</span>
-                            <div class="confidence-bar">
-                                <div class="confidence-fill" id="confidenceFill"></div>
+                        
+                        <div style="margin: 20px 0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Confidence Score</span>
+                                <span id="confidence">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="confidenceFill" style="width: 0%"></div>
                             </div>
                         </div>
-                        <div style="margin: 10px 0;">
-                            <strong>Risk Score:</strong>
-                            <span id="riskScore">-</span>
-                            <div class="confidence-bar">
-                                <div class="confidence-fill" id="riskScoreFill"
-                                    style="background: linear-gradient(90deg, #28a745, #dc3545);"></div>
+
+                        <div style="margin: 20px 0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Risk Score</span>
+                                <span id="riskScore">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="riskScoreFill" style="width: 0%; background: linear-gradient(90deg, #10b981, #ef4444);"></div>
                             </div>
                         </div>
-                        <div>
-                            <strong>Medical Risk Level:</strong>
-                            <span id="riskLevel">-</span>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Risk Level</span>
+                            <span id="riskLevel" class="risk-low">Low</span>
                         </div>
-                        <div id="diseaseDescription" style="margin-top: 10px; font-size: 0.9em; color: #666;"></div>
+
+                        <div id="diseaseDescription" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e2e8f0; color: var(--gray);"></div>
                     </div>
 
-                    <!-- Model Predictions -->
+                    <!-- Top Predictions -->
                     <div class="result-card">
-                        <h3>📊 Top 3 Predictions</h3>
-                        <div id="modelPredictions" style="margin-top: 10px;"></div>
-                    </div>
-
-                    <!-- Image Analysis -->
-                    <div class="result-card">
-                        <h3>🔬 Image Analysis</h3>
-                        <div id="imageAnalysis" style="margin-top: 10px;"></div>
-                    </div>
-
-                    <!-- Risk Factors -->
-                    <div class="result-card">
-                        <h3>⚠️ Risk Factors</h3>
-                        <div id="riskFactors" style="margin-top: 10px;"></div>
+                        <h3>📊 Top Predictions</h3>
+                        <div id="modelPredictions" style="margin-top: 16px;"></div>
                     </div>
                 </div>
 
                 <!-- Feature Analysis -->
-                <div style="margin-top: 30px;">
-                    <h3>🔍 Feature Analysis</h3>
+                <div style="margin: 32px 0;">
+                    <h3 class="section-title" style="font-size: 1.4em;">🔍 Feature Analysis</h3>
                     <div class="result-grid">
                         <div class="result-card">
-                            <h4>🎨 Color Analysis</h4>
-                            <div id="colorAnalysis" style="margin-top: 10px;"></div>
+                            <h3>🎨 Color Analysis</h3>
+                            <div id="colorAnalysis"></div>
                         </div>
                         <div class="result-card">
-                            <h4>📐 Border Analysis</h4>
-                            <div id="borderAnalysis" style="margin-top: 10px;"></div>
+                            <h3>📐 Border Analysis</h3>
+                            <div id="borderAnalysis"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explainable AI Section -->
+                <div style="margin: 32px 0;">
+                    <h3 class="section-title">
+                        <span>🧠</span> Explainable AI Insights
+                    </h3>
+                    <p style="color: var(--gray); margin-bottom: 24px;">
+                        Understanding how our AI reached its conclusion
+                    </p>
+
+                    <div class="xai-grid">
+                        <!-- Grad-CAM Heatmap -->
+                        <div class="result-card">
+                            <h3>🔥 Attention Heatmap</h3>
+                            <div class="heatmap-container">
+                                <img id="gradcamImage" style="width: 100%; border-radius: 12px; display: none;">
+                                <div id="gradcamLoading" style="height: 200px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--gray);">
+                                    Generating heatmap...
+                                </div>
+                                <div class="heatmap-overlay"></div>
+                            </div>
+                            <div id="attentionRegions" style="margin-top: 16px;"></div>
+                        </div>
+
+                        <!-- Feature Contributions -->
+                        <div class="result-card">
+                            <h3>📊 Feature Contributions</h3>
+                            <div class="chart-container" id="shapChart">
+                                <div id="shapLoading" style="height: 250px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--gray);">
+                                    Analyzing features...
+                                </div>
+                            </div>
+                            <div id="topFeatures" style="margin-top: 20px;"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Medical Recommendations -->
-                <div style="margin-top: 30px;">
-                    <h3>💊 Medical Recommendations</h3>
-                    <div id="medicalRecommendations" style="margin-top: 15px;"></div>
+                <div style="margin: 32px 0;">
+                    <h3 class="section-title">💊 Recommendations</h3>
+                    <div id="medicalRecommendations"></div>
                 </div>
 
-                <!-- Next Steps -->
-                <div style="margin-top: 30px;">
-                    <h3>🚀 Clinical Next Steps</h3>
-                    <div id="clinicalNextSteps" style="margin-top: 15px;"></div>
-                </div>
-
-                <!-- Monitoring & Prevention -->
-                <div style="margin-top: 30px;">
-                    <h3>📅 Monitoring & Prevention</h3>
-                    <div id="monitoringPrevention" style="margin-top: 15px;"></div>
-                </div>
-
-                <!-- Enhanced Explainable AI Section -->
-                <div style="margin-top: 30px;">
-                    <h3>🧠 Explainable AI Insights</h3>
-                    <p style="color:#666;font-size:0.9em; margin-bottom: 20px;">
-                        Understand how the AI made its diagnosis with transparent explanations
-                    </p>
-
-                    <div class="xai-grid">
-                        <!-- Grad-CAM Visual Explanations -->
-                        <div class="result-card">
-                            <h4>🔥 AI Attention Heatmap</h4>
-                            <div style="text-align: center; margin: 15px 0;">
-                                <img id="gradcamImage" style="max-width: 100%; border-radius: 8px; display: none;">
-                                <div id="gradcamLoading" style="color: #666; padding: 20px;">
-                                    Generating heatmap...
-                                </div>
-                            </div>
-                            <div id="attentionRegions" style="margin: 15px 0;"></div>
-                            <div class="interpretation-guide">
-                                <strong>How to read:</strong><br>
-                                • <span style="color: #ff6b6b;">Red areas</span>: High diagnostic importance<br>
-                                • <span style="color: #ffd166;">Yellow areas</span>: Moderate importance<br>
-                                • <span style="color: #06d6a0;">Blue areas</span>: Low importance
-                            </div>
-                        </div>
-
-                        <!-- SHAP Feature Explanations -->
-                        <div class="result-card">
-                            <h4>📊 Feature Contributions</h4>
-                            <div id="shapPlotContainer" style="text-align: center; margin: 15px 0;">
-                                <img id="shapPlot" style="max-width: 100%; border-radius: 8px; display: none;">
-                                <div id="shapLoading" style="color: #666; padding: 20px;">
-                                    Analyzing feature contributions...
-                                </div>
-                            </div>
-                            <div id="topFeatures" style="margin: 15px 0;"></div>
-                            <div style="font-size: 0.9em; color: #666;">
-                                Shows which features most influenced the diagnosis
-                            </div>
-                        </div>
-
-                        <!-- Trustworthy Diagnosis -->
-                        <div class="result-card">
-                            <h4>🎯 Trustworthy Diagnosis</h4>
-                            <div style="text-align: center; margin: 15px 0;">
-                                <div style="font-size: 2em; font-weight: bold; color: #2575fc;" id="trustScoreValue">-
-                                </div>
-                                <div style="color: #666;">Explanation Consistency Score</div>
-                            </div>
-
-                            <div style="margin: 15px 0;">
-                                <div
-                                    style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
-                                    <span>Visual-Feature Alignment</span>
-                                    <div style="width: 100px; height: 6px; background: #e9ecef; border-radius: 3px;">
-                                        <div style="height: 100%; background: #2575fc; border-radius: 3px; width: 0%"
-                                            id="alignmentScore"></div>
-                                    </div>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
-                                    <span>Evidence Consistency</span>
-                                    <div style="width: 100px; height: 6px; background: #e9ecef; border-radius: 3px;">
-                                        <div style="height: 100%; background: #2575fc; border-radius: 3px; width: 0%"
-                                            id="evidenceScore"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="keyEvidence" style="margin: 15px 0;"></div>
-                        </div>
-
-                        <!-- Medical Reasoning -->
-                        <div class="result-card">
-                            <h4>🏥 Medical Reasoning</h4>
-                            <div id="medicalReasoning" style="margin: 15px 0;"></div>
-                            <div id="differentialDiagnosis" style="margin: 15px 0;"></div>
-                            <div id="managementImplications" style="margin: 15px 0;"></div>
-                        </div>
+                <!-- Next Steps & Prevention -->
+                <div class="result-grid">
+                    <div class="result-card">
+                        <h3>🚀 Clinical Next Steps</h3>
+                        <div id="clinicalNextSteps"></div>
+                    </div>
+                    <div class="result-card">
+                        <h3>📅 Prevention Tips</h3>
+                        <div id="monitoringPrevention"></div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -630,13 +912,14 @@
         const imageInput = document.getElementById('imageInput');
         const fileName = document.getElementById('fileName');
         const imagePreview = document.getElementById('imagePreview');
+        const previewContainer = document.getElementById('previewContainer');
         const analyzeBtn = document.getElementById('analyzeBtn');
         const loading = document.getElementById('loading');
         const resultSection = document.getElementById('resultSection');
         const connectionStatus = document.getElementById('connectionStatus');
         const modelInfo = document.getElementById('modelInfo');
 
-        // Test backend connection on page load
+        // Test backend connection
         window.addEventListener('load', async () => {
             try {
                 const response = await fetch('https://dermatologist-assistant-w6o3.onrender.com/health');
@@ -644,32 +927,42 @@
 
                 if (response.ok) {
                     connectionStatus.className = 'status-message status-success';
-                    connectionStatus.innerHTML = `✅ Connected to Dynamic ML Backend | Analysis Type: ${data.analysis_type} | Status: ${data.status}`;
-                    console.log('✅ Backend connection successful:', data);
+                    connectionStatus.innerHTML = `
+                        <span>✅</span>
+                        <div>
+                            <strong>Connected to DermAI Backend</strong><br>
+                            <span style="font-size: 0.9em;">Analysis Type: ${data.analysis_type} | Status: ${data.status}</span>
+                        </div>
+                    `;
                 } else {
                     throw new Error(`HTTP ${response.status}`);
                 }
             } catch (error) {
                 connectionStatus.className = 'status-message status-error';
-                connectionStatus.innerHTML = '❌ Backend not connected. Make sure Flask server is running: <code>python app.py</code>';
-                console.error('❌ Backend connection failed:', error);
+                connectionStatus.innerHTML = `
+                    <span>❌</span>
+                    <div>
+                        <strong>Backend Connection Failed</strong><br>
+                        <span style="font-size: 0.9em;">Please ensure the server is running</span>
+                    </div>
+                `;
+                console.error('Connection error:', error);
             }
         });
 
         // File input change handler
-        imageInput.addEventListener('change', function () {
+        imageInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
-                fileName.textContent = this.files[0].name;
+                const file = this.files[0];
+                fileName.textContent = `Selected: ${file.name}`;
 
-                // Show image preview
                 const reader = new FileReader();
-                reader.onload = function (e) {
+                reader.onload = function(e) {
                     imagePreview.src = e.target.result;
-                    imagePreview.style.display = 'block';
+                    previewContainer.style.display = 'block';
                 }
-                reader.readAsDataURL(this.files[0]);
-
-                // Hide previous results
+                reader.readAsDataURL(file);
+                
                 resultSection.style.display = 'none';
             }
         });
@@ -679,28 +972,37 @@
             const file = imageInput.files[0];
 
             if (!file) {
-                console.error('Please select a skin image first!');
+                showNotification('Please select an image first', 'error');
                 return;
             }
 
-            // Validate file type
             if (!file.type.startsWith('image/')) {
-                console.error('Please select a valid image file (JPEG, PNG, etc.)');
+                showNotification('Please select a valid image file', 'error');
                 return;
             }
 
-            // Show loading, hide results
+            // Update UI for analysis
             loading.style.display = 'block';
             resultSection.style.display = 'none';
             analyzeBtn.disabled = true;
+
+            // Progress steps animation
+            const steps = document.querySelectorAll('.step');
+            let currentStep = 0;
+            
+            const stepInterval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    steps[currentStep].classList.add('active');
+                    currentStep++;
+                } else {
+                    clearInterval(stepInterval);
+                }
+            }, 2000);
 
             try {
                 const formData = new FormData();
                 formData.append('image', file);
 
-                console.log('📤 Sending image for dynamic analysis...');
-
-                // Send to backend
                 const response = await fetch('https://dermatologist-assistant-w6o3.onrender.com/predict?with_xai=1', {
                     method: 'POST',
                     body: formData
@@ -712,587 +1014,109 @@
                 }
 
                 const result = await response.json();
-                console.log('✅ Dynamic Analysis Complete:', result);
-
-                // DEBUG: Check XAI data structure
-                console.log('🔍 XAI Data Structure:', result.explanations);
-                if (result.explanations) {
-                    console.log('📊 XAI Keys:', Object.keys(result.explanations));
-                    console.log('📊 Grad-CAM has image:', !!result.explanations.grad_cam?.image_base64);
-                    console.log('📊 SHAP has features:', result.explanations.shap?.feature_contributions?.length || 0);
-                }
-
-                // Display results
-                displayDynamicResults(result);
+                displayResults(result);
+                
+                showNotification('Analysis complete!', 'success');
 
             } catch (error) {
-                console.error('❌ Analysis error:', error);
-                let errorMessage = error.message;
-
-                if (error.message.includes('Failed to fetch')) {
-                    errorMessage = 'Cannot connect to ML backend. Make sure Flask server is running on port 5000.';
-                } else if (error.message.includes('NetworkError')) {
-                    errorMessage = 'Network error. Check your connection and server status.';
-                }
-
-                console.error('Dynamic Analysis Error: ' + errorMessage);
+                console.error('Analysis error:', error);
+                showNotification('Analysis failed: ' + error.message, 'error');
             } finally {
+                clearInterval(stepInterval);
                 loading.style.display = 'none';
                 analyzeBtn.disabled = false;
+                
+                // Reset steps
+                steps.forEach(step => step.classList.remove('active'));
             }
         }
 
-        // Display dynamic analysis results
-        function displayDynamicResults(result) {
-            console.log('Displaying dynamic results:', result);
-
-            // Check for errors
-            if (result.error) {
-                console.error('Analysis Error: ' + result.error);
-                return;
-            }
-
+        // Display results
+        function displayResults(result) {
             // Update model info
             const metadata = result.metadata || {};
             modelInfo.innerHTML = `
-                🤖 <strong>Dynamic ML Analysis</strong> | 
-                Method: ${metadata.model_used || 'Feature Analysis'} | 
-                Analysis ID: ${metadata.analysis_id || 'N/A'} |
-                Confidence: ${metadata.confidence_rating || 'Unknown'} |
-                Timestamp: ${new Date(metadata.analysis_timestamp || Date.now()).toLocaleTimeString()}
+                <span>🤖 ${metadata.model_used || 'Deep Learning Model'} · Analysis ID: ${metadata.analysis_id?.slice(0,8) || 'N/A'}</span>
+                <span class="model-badge">${(metadata.confidence * 100).toFixed(0)}% Confidence</span>
             `;
 
-            // Update primary diagnosis
+            // Update diagnosis
             const prediction = result.prediction || {};
             const primary = prediction.primary || {};
-            const recommendations = result.recommendations || {};
-            const analysis = result.analysis || {};
-
-            const disease = primary.disease || 'Analysis in Progress';
-            const confidence = primary.confidence || 0;
-            const riskScore = primary.risk_score || 0;
-            const severity = primary.severity || 'Unknown';
-
-            document.getElementById('disease').textContent = disease;
-            document.getElementById('confidence').textContent = (confidence * 100).toFixed(1) + '%';
-            document.getElementById('riskScore').textContent = (riskScore * 100).toFixed(1) + '%';
-
-            const confidenceFill = document.getElementById('confidenceFill');
-            confidenceFill.style.width = (confidence * 100) + '%';
-
-            const riskScoreFill = document.getElementById('riskScoreFill');
-            riskScoreFill.style.width = (riskScore * 100) + '%';
+            
+            document.getElementById('disease').textContent = primary.disease || 'Analysis in Progress';
+            document.getElementById('confidence').textContent = (primary.confidence * 100).toFixed(1) + '%';
+            document.getElementById('riskScore').textContent = (primary.risk_score * 100).toFixed(1) + '%';
+            
+            document.getElementById('confidenceFill').style.width = (primary.confidence * 100) + '%';
+            document.getElementById('riskScoreFill').style.width = (primary.risk_score * 100) + '%';
 
             // Update risk level
-            const riskLevelElement = document.getElementById('riskLevel');
-            riskLevelElement.textContent = severity;
+            const severity = primary.severity || 'Low';
+            const riskElement = document.getElementById('riskLevel');
+            riskElement.textContent = severity;
+            riskElement.className = severity === 'High' ? 'risk-high' : severity === 'Medium' ? 'risk-medium' : 'risk-low';
 
-            // Style based on severity
-            if (severity && typeof severity === 'string') {
-                riskLevelElement.className = 'severity-' + severity.toLowerCase();
-            } else {
-                riskLevelElement.className = 'severity-unknown';
-            }
-
-            // Style diagnosis card
+            // Update diagnosis card styling
             const diagnosisCard = document.getElementById('diagnosisCard');
-            if (severity && typeof severity === 'string') {
-                diagnosisCard.className = 'result-card risk-' + severity.toLowerCase();
-            } else {
-                diagnosisCard.className = 'result-card';
-            }
+            diagnosisCard.style.borderLeft = `4px solid ${
+                severity === 'High' ? '#ef4444' : severity === 'Medium' ? '#f59e0b' : '#10b981'
+            }`;
 
-            // Update disease description
-            document.getElementById('diseaseDescription').textContent = recommendations.description || 'Dynamic analysis based on image features.';
+            // Display predictions
+            displayPredictions(prediction.all_predictions || []);
 
-            // Display model predictions
-            displayModelPredictions(prediction.all_predictions || []);
-
-            // Display image analysis
-            displayImageAnalysis(analysis.features_analyzed || {});
-
-            // Display risk factors
-            displayRiskFactors(recommendations.risk_factors || []);
-
-            // Display color analysis
+            // Display feature analysis
+            const analysis = result.analysis || {};
             displayColorAnalysis(analysis.color_analysis || {});
-
-            // Display border analysis
             displayBorderAnalysis(analysis.border_analysis || {});
 
-            // Display medical recommendations
-            displayMedicalRecommendations(recommendations.precautions || []);
+            // Display recommendations
+            const recommendations = result.recommendations || {};
+            displayRecommendations(recommendations.precautions || []);
 
-            // Display clinical next steps
-            displayClinicalNextSteps([
-                'Document findings with photographs',
-                'Track lesion changes over time',
-                'Schedule professional consultation'
+            // Display next steps
+            displayNextSteps([
+                'Schedule follow-up with dermatologist',
+                'Document with clinical photography',
+                'Monitor for changes'
             ]);
 
-            // Display monitoring and prevention
-            displayMonitoringPrevention(
-                recommendations.monitoring_schedule || 'Regular monitoring recommended',
-                [
-                    'Use broad-spectrum sunscreen daily',
-                    'Avoid excessive sun exposure',
-                    'Perform regular skin self-examinations'
-                ]
-            );
+            // Display prevention tips
+            displayPrevention([
+                'Use SPF 30+ sunscreen daily',
+                'Avoid peak sun hours (10am-4pm)',
+                'Perform monthly self-exams'
+            ]);
 
-            // Display XAI Explanations if available
+            // Display XAI if available
             if (result.explanations) {
-                displayXAIExplanations(result.explanations);
-            } else {
-                // If no XAI data, show a message
-                displayFallbackXAI();
+                displayXAI(result.explanations);
             }
 
-            // Show results
             resultSection.style.display = 'block';
             resultSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Display XAI Explanations
-        function displayXAIExplanations(explanations) {
-            console.log('Displaying XAI explanations:', explanations);
-
-            // Reset all XAI sections first
-            displayFallbackXAI();
-
-            // 1. Grad-CAM Visual Explanations
-            if (explanations.grad_cam && explanations.grad_cam.image_base64) {
-                displayGradCAM(explanations.grad_cam);
-            }
-
-            // 2. SHAP Feature Explanations
-            if (explanations.shap && explanations.shap.feature_contributions) {
-                displaySHAP(explanations.shap);
-            }
-
-            // 3. Trustworthy Diagnosis
-            if (explanations.trustworthy_diagnosis) {
-                displayTrustworthyDiagnosis(explanations.trustworthy_diagnosis);
-            }
-
-            // 4. Medical Reasoning
-            if (explanations.medical_reasoning) {
-                displayMedicalReasoning(explanations.medical_reasoning);
-            }
-        }
-
-        // Display Grad-CAM Heatmap
-        function displayGradCAM(gradcamData) {
-            if (gradcamData.image_base64) {
-                const gradcamImage = document.getElementById('gradcamImage');
-                gradcamImage.src = 'data:image/png;base64,' + gradcamData.image_base64;
-                gradcamImage.style.display = 'block';
-                document.getElementById('gradcamLoading').style.display = 'none';
-
-                // Update description
-                if (gradcamData.description) {
-                    document.getElementById('gradcamLoading').innerHTML = gradcamData.description;
-                }
-            }
-
-            // Display attention regions
-            if (gradcamData.attention_regions && gradcamData.attention_regions.length > 0) {
-                let regionsHTML = '<strong>Key Attention Areas:</strong><br>';
-                gradcamData.attention_regions.forEach(region => {
-                    const importanceClass = region.importance === 'High' ? 'region-high' :
-                        region.importance === 'Medium' ? 'region-medium' : 'region-low';
-                    regionsHTML += `
-                        <span class="attention-region ${importanceClass}">
-                            ${region.medical_significance || region.name}
-                        </span>
-                    `;
-                });
-                document.getElementById('attentionRegions').innerHTML = regionsHTML;
-            }
-        }
-
-        // Display SHAP Feature Contributions
-        function displaySHAP(shapData) {
-            // Show SHAP plot if available
-            if (shapData.summary_plot_base64) {
-                const shapPlot = document.getElementById('shapPlot');
-                shapPlot.src = 'data:image/png;base64,' + shapData.summary_plot_base64;
-                shapPlot.style.display = 'block';
-                document.getElementById('shapLoading').style.display = 'none';
-            }
-
-            // Display top features
-            if (shapData.feature_contributions && shapData.feature_contributions.length > 0) {
-                let featuresHTML = '<strong>Most Influential Features:</strong><br>';
-                shapData.feature_contributions.slice(0, 5).forEach(feature => {
-                    const directionClass = feature.direction === 'Positive' ? 'xai-feature-positive' : 'xai-feature-negative';
-                    const directionIcon = feature.direction === 'Positive' ? '📈' : '📉';
-
-                    featuresHTML += `
-                        <div class="xai-feature-item ${directionClass}">
-                            ${directionIcon} <strong>${feature.feature}:</strong> 
-                            ${feature.shap_value > 0 ? '+' : ''}${feature.shap_value.toFixed(3)} 
-                            (${feature.impact})
-                            <br><small style="color: #666;">${feature.medical_interpretation}</small>
-                        </div>
-                    `;
-                });
-                document.getElementById('topFeatures').innerHTML = featuresHTML;
-            } else {
-                document.getElementById('shapLoading').innerHTML = 'Feature analysis completed';
-            }
-        }
-
-        // Display Trustworthy Diagnosis
-        function displayTrustworthyDiagnosis(trustworthyData) {
-            // Display trust score
-            const trustScore = trustworthyData.trust_score || 0;
-            document.getElementById('trustScoreValue').textContent = (trustScore * 100).toFixed(0) + '%';
-
-            // Display confidence breakdown with actual values
-            const alignmentScore = trustworthyData.confidence_factors?.visual_evidence || 0.78;
-            const evidenceScore = trustworthyData.confidence_factors?.feature_consistency || 0.85;
-
-            document.getElementById('alignmentScore').style.width = (alignmentScore * 100) + '%';
-            document.getElementById('evidenceScore').style.width = (evidenceScore * 100) + '%';
-
-            // Display key evidence
-            if (trustworthyData.key_evidence) {
-                let evidenceHTML = '<strong>Key Evidence:</strong><div style="margin: 10px 0;">';
-
-                if (trustworthyData.key_evidence.visual_evidence) {
-                    evidenceHTML += '<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 10px;">';
-                    evidenceHTML += '<strong>Visual Evidence:</strong><br>';
-                    trustworthyData.key_evidence.visual_evidence.forEach(evidence => {
-                        evidenceHTML += `• ${evidence.significance || evidence.feature}<br>`;
-                    });
-                    evidenceHTML += '</div>';
-                }
-
-                if (trustworthyData.key_evidence.feature_evidence) {
-                    evidenceHTML += '<div style="background: #f8f9fa; padding: 10px; border-radius: 6px;">';
-                    evidenceHTML += '<strong>Feature Evidence:</strong><br>';
-                    trustworthyData.key_evidence.feature_evidence.forEach(evidence => {
-                        evidenceHTML += `• ${evidence.feature}: ${evidence.impact}<br>`;
-                    });
-                    evidenceHTML += '</div>';
-                }
-
-                evidenceHTML += '</div>';
-                document.getElementById('keyEvidence').innerHTML = evidenceHTML;
-            }
-        }
-
-        // Display Medical Reasoning
-        function displayMedicalReasoning(medicalData) {
-            let reasoningHTML = '';
-
-            if (medicalData.pathophysiology) {
-                reasoningHTML += `<div class="xai-feature-item">
-                    <strong>Pathophysiology:</strong> ${medicalData.pathophysiology}
-                </div>`;
-            }
-
-            if (medicalData.clinical_correlates && medicalData.clinical_correlates.length > 0) {
-                reasoningHTML += `<div class="xai-feature-item">
-                    <strong>Clinical Features:</strong> ${Array.isArray(medicalData.clinical_correlates) ? medicalData.clinical_correlates.join(', ') : medicalData.clinical_correlates}
-                </div>`;
-            }
-
-            if (medicalData.key_findings && medicalData.key_findings.length > 0) {
-                reasoningHTML += `<div class="xai-feature-item">
-                    <strong>Key Findings:</strong> ${Array.isArray(medicalData.key_findings) ? medicalData.key_findings.join(', ') : medicalData.key_findings}
-                </div>`;
-            }
-
-            document.getElementById('medicalReasoning').innerHTML = reasoningHTML;
-
-            // Display differential diagnosis
-            if (medicalData.differential_diagnosis && medicalData.differential_diagnosis.length > 0) {
-                let diffHTML = '<strong>Differential Diagnosis:</strong><br>';
-                medicalData.differential_diagnosis.forEach(diagnosis => {
-                    diffHTML += `<div class="xai-feature-item">• ${diagnosis}</div>`;
-                });
-                document.getElementById('differentialDiagnosis').innerHTML = diffHTML;
-            }
-
-            // Display management implications
-            if (medicalData.management_implications) {
-                document.getElementById('managementImplications').innerHTML = `
-                    <div class="xai-feature-item xai-feature-positive">
-                        <strong>Management Implications:</strong><br>
-                        ${medicalData.management_implications}
-                    </div>
-                `;
-            }
-        }
-
-        // Fallback XAI display
-        function displayFallbackXAI() {
-            document.getElementById('gradcamImage').style.display = 'none';
-            document.getElementById('gradcamLoading').innerHTML = 'Heatmap generation not available';
-
-            document.getElementById('shapPlot').style.display = 'none';
-            document.getElementById('shapLoading').innerHTML = 'Feature analysis not available';
-
-            document.getElementById('trustScoreValue').textContent = 'N/A';
-            document.getElementById('alignmentScore').style.width = '0%';
-            document.getElementById('evidenceScore').style.width = '0%';
-            document.getElementById('keyEvidence').innerHTML = '<div style="color: #666;">XAI data not available in this analysis</div>';
-            document.getElementById('medicalReasoning').innerHTML = '';
-            document.getElementById('differentialDiagnosis').innerHTML = '';
-            document.getElementById('managementImplications').innerHTML = '';
-            document.getElementById('attentionRegions').innerHTML = '';
-            document.getElementById('topFeatures').innerHTML = '';
-        }
-
-        // Display model predictions with probabilities
-        function displayModelPredictions(allPredictions) {
+        // Display predictions
+        function displayPredictions(predictions) {
             const container = document.getElementById('modelPredictions');
             container.innerHTML = '';
 
-            if (!Array.isArray(allPredictions) || allPredictions.length === 0) {
-                container.innerHTML = '<div style="color: #666;">Processing predictions...</div>';
+            if (!predictions.length) {
+                container.innerHTML = '<div style="color: var(--gray);">No predictions available</div>';
                 return;
             }
 
-            // Sort by confidence (descending)
-            const sortedPredictions = [...allPredictions].sort((a, b) => b.confidence - a.confidence);
-
-            // *** MODIFICATION: Slice the array to only include the top 3 predictions ***
-            const top3Predictions = sortedPredictions.slice(0, 3);
-
-            top3Predictions.forEach((pred, index) => {
+            const sorted = [...predictions].sort((a, b) => b.confidence - a.confidence).slice(0, 3);
+            
+            sorted.forEach(pred => {
                 const div = document.createElement('div');
-                div.className = 'prediction-item';
+                div.style.marginBottom = '16px';
                 div.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                         <strong>${pred.disease}</strong>
-                        <span style="color: #666; font-weight: bold;">${(pred.confidence * 100).toFixed(1)}%</span>
+                        <span style="color: var(--primary);">${(pred.confidence * 100).toFixed(1)}%</span>
                     </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: ${pred.confidence * 100}%"></div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // Display image analysis features
-        function displayImageAnalysis(features) {
-            const container = document.getElementById('imageAnalysis');
-            container.innerHTML = '';
-
-            if (!features || typeof features !== 'object' || Object.keys(features).length === 0) {
-                container.innerHTML = '<div style="color: #666;">Analyzing image features...</div>';
-                return;
-            }
-
-            const featureMap = {
-                'color_variance': 'Color Variation',
-                'red_channel_mean': 'Red Channel',
-                'green_channel_mean': 'Green Channel',
-                'blue_channel_mean': 'Blue Channel',
-                'saturation_mean': 'Saturation',
-                'brightness_mean': 'Brightness',
-                'contrast': 'Contrast',
-                'smoothness': 'Texture Smoothness',
-                'edge_density': 'Edge Density',
-                'color_uniformity': 'Color Uniformity',
-                'asymmetry_score': 'Asymmetry Score'
-            };
-
-            Object.entries(features).forEach(([key, value]) => {
-                if (featureMap[key]) {
-                    let displayValue = value;
-                    let unit = '';
-
-                    if (typeof value === 'number') {
-                        if (key.includes('mean') || key.includes('channel')) {
-                            displayValue = value.toFixed(0);
-                            unit = '';
-                        } else if (key.includes('score') || key.includes('variance') || key.includes('uniformity')) {
-                            displayValue = (value * 100).toFixed(0);
-                            unit = '%';
-                        } else {
-                            displayValue = value.toFixed(2);
-                        }
-                    }
-
-                    const div = document.createElement('div');
-                    div.className = 'analysis-feature';
-                    div.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <strong>${featureMap[key]}:</strong>
-                            <span class="feature-badge">${displayValue}${unit}</span>
-                        </div>
-                        <div style="height: 4px; background: #e9ecef; border-radius: 2px; margin-top: 4px;">
-                            <div style="height: 100%; background: #2575fc; border-radius: 2px; width: ${Math.min(value * 100, 100)}%"></div>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                }
-            });
-        }
-
-        // Display color analysis
-        function displayColorAnalysis(colorAnalysis) {
-            const container = document.getElementById('colorAnalysis');
-            container.innerHTML = '';
-
-            if (!colorAnalysis || typeof colorAnalysis !== 'object') {
-                container.innerHTML = '<div style="color: #666;">Color analysis in progress...</div>';
-                return;
-            }
-
-            Object.entries(colorAnalysis).forEach(([key, value]) => {
-                const div = document.createElement('div');
-                div.style.margin = '8px 0';
-                div.style.padding = '8px';
-                div.style.background = '#f8f9fa';
-                div.style.borderRadius = '4px';
-
-                let displayValue = value;
-                let badgeClass = 'feature-badge';
-
-                if (typeof value === 'boolean') {
-                    displayValue = value ? 'Yes' : 'No';
-                    badgeClass = value ? 'risk-high-badge' : 'risk-low-badge';
-                } else if (typeof value === 'string') {
-                    badgeClass = value === 'High' ? 'risk-high-badge' :
-                        value === 'Medium' ? 'risk-medium-badge' : 'risk-low-badge';
-                }
-
-                div.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong>${key.replace(/_/g, ' ').toUpperCase()}:</strong>
-                        <span class="${badgeClass}">${displayValue}</span>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // Display border analysis
-        function displayBorderAnalysis(borderAnalysis) {
-            const container = document.getElementById('borderAnalysis');
-            container.innerHTML = '';
-
-            if (!borderAnalysis || typeof borderAnalysis !== 'object') {
-                container.innerHTML = '<div style="color: #666;">Border analysis in progress...</div>';
-                return;
-            }
-
-            Object.entries(borderAnalysis).forEach(([key, value]) => {
-                const div = document.createElement('div');
-                div.style.margin = '8px 0';
-                div.style.padding = '8px';
-                div.style.background = '#f8f9fa';
-                div.style.borderRadius = '4px';
-
-                let displayValue = value;
-                let badgeClass = 'feature-badge';
-
-                if (typeof value === 'number') {
-                    displayValue = value.toFixed(2);
-                } else if (typeof value === 'string') {
-                    badgeClass = value === 'Irregular' ? 'risk-high-badge' :
-                        value === 'Present' ? 'risk-medium-badge' : 'risk-low-badge';
-                }
-
-                div.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong>${key.replace(/_/g, ' ').toUpperCase()}:</strong>
-                        <span class="${badgeClass}">${displayValue}</span>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // Display risk factors
-        function displayRiskFactors(riskFactors) {
-            const container = document.getElementById('riskFactors');
-            container.innerHTML = '';
-
-            if (!Array.isArray(riskFactors) || riskFactors.length === 0) {
-                container.innerHTML = '<div style="color: #666;">Analyzing risk factors...</div>';
-                return;
-            }
-
-            riskFactors.forEach(factor => {
-                const div = document.createElement('div');
-                div.className = 'recommendation-item';
-                div.style.background = '#fff5f5';
-                div.style.borderLeftColor = '#fd7e14';
-                div.innerHTML = `⚠️ ${factor}`;
-                container.appendChild(div);
-            });
-        }
-
-        // Display medical recommendations
-        function displayMedicalRecommendations(precautions) {
-            const container = document.getElementById('medicalRecommendations');
-            container.innerHTML = '';
-
-            if (!Array.isArray(precautions) || precautions.length === 0) {
-                container.innerHTML = '<div class="recommendation-item">Consult a dermatologist for professional evaluation</div>';
-                return;
-            }
-
-            precautions.forEach((rec, index) => {
-                const div = document.createElement('div');
-                div.className = 'recommendation-item';
-                if (index === 0) {
-                    div.className += ' urgent-item';
-                }
-                div.textContent = rec;
-                container.appendChild(div);
-            });
-        }
-
-        // Display clinical next steps
-        function displayClinicalNextSteps(nextSteps) {
-            const container = document.getElementById('clinicalNextSteps');
-            container.innerHTML = '';
-
-            if (!Array.isArray(nextSteps) || nextSteps.length === 0) {
-                container.innerHTML = '<div class="recommendation-item">Schedule a consultation with a dermatologist</div>';
-                return;
-            }
-
-            nextSteps.forEach(step => {
-                const div = document.createElement('div');
-                div.className = 'recommendation-item';
-                div.textContent = step;
-                container.appendChild(div);
-            });
-        }
-
-        // Display monitoring and prevention
-        function displayMonitoringPrevention(monitoringSchedule, preventionTips) {
-            const container = document.getElementById('monitoringPrevention');
-            container.innerHTML = '';
-
-            // Monitoring schedule
-            if (monitoringSchedule) {
-                const monitoringDiv = document.createElement('div');
-                monitoringDiv.className = 'recommendation-item';
-                monitoringDiv.innerHTML = `<strong>📅 Monitoring Schedule:</strong> ${monitoringSchedule}`;
-                container.appendChild(monitoringDiv);
-            }
-
-            // Prevention tips
-            if (preventionTips && Array.isArray(preventionTips) && preventionTips.length > 0) {
-                preventionTips.forEach(tip => {
-                    const div = document.createElement('div');
-                    div.className = 'recommendation-item';
-                    div.textContent = tip;
-                    container.appendChild(div);
-                });
-            }
-        }
-    </script>
-</body>
-
-</html>
+                    <div class="progress-bar">
+                       
