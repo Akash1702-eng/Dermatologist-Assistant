@@ -37,7 +37,7 @@ except Exception:
 
 # Import the ExplainabilityEngine from xai_explainer.py (must be present)
 try:
-    from xai_explainer import ExplainabilityEngine
+    from backend.xai_explainer import ExplainabilityEngine
 except Exception as e:
     # If import fails, create a minimal fallback to avoid runtime errors
     print("⚠️ Could not import xai_explainer.ExplainabilityEngine:", e)
