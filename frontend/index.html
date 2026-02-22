@@ -639,7 +639,7 @@
         // Test backend connection on page load
         window.addEventListener('load', async () => {
             try {
-                const response = await fetch('https://dermatologist-assistant-w6o3.onrender.com/health');
+                const response = await fetch('https://dermatologist-assistant-lej1.onrender.com/health');
                 const data = await response.json();
 
                 if (response.ok) {
@@ -701,7 +701,7 @@
                 console.log('📤 Sending image for dynamic analysis...');
 
                 // Send to backend
-                const response = await fetch('https://dermatologist-assistant-w6o3.onrender.com/predict?with_xai=1', {
+                const response = await fetch('https://dermatologist-assistant-lej1.onrender.com/predict?with_xai=1', {
                     method: 'POST',
                     body: formData
                 });
