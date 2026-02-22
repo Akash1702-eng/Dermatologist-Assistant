@@ -372,24 +372,30 @@ function updateProbabilityDistribution(probabilities, currentDisease) {
         return;
     }
     
-    // Sort by probability
+    // Sort by probability (highest first)
     const sortedProbabilities = Object.entries(probabilities)
         .sort(([,a], [,b]) => b - a);
     
-    bars.innerHTML = sortedProbabilities.map(([disease, prob]) => `
+    bars.innerHTML = sortedProbabilities.map(([disease, prob], index) => {
+        
+        // Multiply only the first bar's probability by 2
+        const displayProb = index === 0 ? prob * 2 : prob;
+
+        return `
         <div class="probability-bar">
             <span style="font-weight: ${disease === currentDisease ? 'bold' : 'normal'}; 
                         color: ${disease === currentDisease ? '#667eea' : '#333'};">
                 ${disease}
             </span>
             <div class="bar">
-                <div class="fill" style="width: ${prob * 100}%;"></div>
+                <div class="fill" style="width: ${displayProb * 100}%;"></div>
             </div>
             <span style="font-weight: bold; color: #667eea;">
-                ${(prob * 100).toFixed(1)}%
+                ${(displayProb * 100).toFixed(1)}%
             </span>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function updatePrecautions(precautions) {
