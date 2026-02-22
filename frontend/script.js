@@ -13,7 +13,7 @@ const error = document.getElementById('error');
 const resultsSection = document.getElementById('resultsSection');
 
 // API Configuration
-const API_BASE = "https://dermatologist-assistant-lej1.onrender.com";
+const API_BASE = "https://akash1702-eng-dermatologist-assistant.hf.space/";
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', initializeApp);
