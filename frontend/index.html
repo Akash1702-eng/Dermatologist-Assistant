@@ -379,6 +379,7 @@
             border-left: 4px solid #2575fc;
             margin: 15px 0;
         }
+
     </style>
 </head>
 
@@ -539,6 +540,15 @@
                     <div id="monitoringPrevention" style="margin-top: 15px;"></div>
                 </div>
 
+                <!-- Recommended Products -->
+                <div style="margin-top: 30px;">
+                    <h3>🛒 Recommended Products</h3>
+                    <p style="color:#666; font-size:0.9em;">
+                        Suggested over-the-counter skincare options based on AI analysis.
+                    </p>
+                    <div id="productSection" class="result-grid" style="margin-top:15px;"></div>
+                </div>
+                
                 <!-- Enhanced Explainable AI Section -->
                 <div style="margin-top: 30px;">
                     <h3>🧠 Explainable AI Insights</h3>
@@ -745,13 +755,13 @@
         // Display dynamic analysis results
         function displayDynamicResults(result) {
             console.log('Displaying dynamic results:', result);
-
+        
             // Check for errors
             if (result.error) {
                 console.error('Analysis Error: ' + result.error);
                 return;
             }
-
+        
             // Update model info
             const metadata = result.metadata || {};
             modelInfo.innerHTML = `
@@ -761,76 +771,48 @@
                 Confidence: ${metadata.confidence_rating || 'Unknown'} |
                 Timestamp: ${new Date(metadata.analysis_timestamp || Date.now()).toLocaleTimeString()}
             `;
-
-            // Update primary diagnosis
+        
             const prediction = result.prediction || {};
             const primary = prediction.primary || {};
             const recommendations = result.recommendations || {};
             const analysis = result.analysis || {};
-
+        
             const disease = primary.disease || 'Analysis in Progress';
             const confidence = primary.confidence || 0;
             const riskScore = primary.risk_score || 0;
             const severity = primary.severity || 'Unknown';
-
+        
             document.getElementById('disease').textContent = disease;
             document.getElementById('confidence').textContent = (confidence * 100).toFixed(1) + '%';
             document.getElementById('riskScore').textContent = (riskScore * 100).toFixed(1) + '%';
-
-            const confidenceFill = document.getElementById('confidenceFill');
-            confidenceFill.style.width = (confidence * 100) + '%';
-
-            const riskScoreFill = document.getElementById('riskScoreFill');
-            riskScoreFill.style.width = (riskScore * 100) + '%';
-
-            // Update risk level
+        
+            document.getElementById('confidenceFill').style.width = (confidence * 100) + '%';
+            document.getElementById('riskScoreFill').style.width = (riskScore * 100) + '%';
+        
             const riskLevelElement = document.getElementById('riskLevel');
             riskLevelElement.textContent = severity;
-
-            // Style based on severity
-            if (severity && typeof severity === 'string') {
-                riskLevelElement.className = 'severity-' + severity.toLowerCase();
-            } else {
-                riskLevelElement.className = 'severity-unknown';
-            }
-
-            // Style diagnosis card
+            riskLevelElement.className = severity ? 'severity-' + severity.toLowerCase() : '';
+        
             const diagnosisCard = document.getElementById('diagnosisCard');
-            if (severity && typeof severity === 'string') {
-                diagnosisCard.className = 'result-card risk-' + severity.toLowerCase();
-            } else {
-                diagnosisCard.className = 'result-card';
-            }
-
-            // Update disease description
-            document.getElementById('diseaseDescription').textContent = recommendations.description || 'Dynamic analysis based on image features.';
-
-            // Display model predictions
+            diagnosisCard.className = severity ? 'result-card risk-' + severity.toLowerCase() : 'result-card';
+        
+            document.getElementById('diseaseDescription').textContent =
+                recommendations.description || 'Dynamic analysis based on image features.';
+        
+            // Display sections
             displayModelPredictions(prediction.all_predictions || []);
-
-            // Display image analysis
             displayImageAnalysis(analysis.features_analyzed || {});
-
-            // Display risk factors
             displayRiskFactors(recommendations.risk_factors || []);
-
-            // Display color analysis
             displayColorAnalysis(analysis.color_analysis || {});
-
-            // Display border analysis
             displayBorderAnalysis(analysis.border_analysis || {});
-
-            // Display medical recommendations
             displayMedicalRecommendations(recommendations.precautions || []);
-
-            // Display clinical next steps
+        
             displayClinicalNextSteps([
                 'Document findings with photographs',
                 'Track lesion changes over time',
                 'Schedule professional consultation'
             ]);
-
-            // Display monitoring and prevention
+        
             displayMonitoringPrevention(
                 recommendations.monitoring_schedule || 'Regular monitoring recommended',
                 [
@@ -839,15 +821,37 @@
                     'Perform regular skin self-examinations'
                 ]
             );
-
-            // Display XAI Explanations if available
+        
+            // Display XAI
             if (result.explanations) {
                 displayXAIExplanations(result.explanations);
             } else {
-                // If no XAI data, show a message
                 displayFallbackXAI();
             }
-
+        
+            // ------------------------------
+            // 🛒 Display Recommended Products
+            // ------------------------------
+            const productContainer = document.getElementById('productSection');
+        
+            if (result.product_note) {
+                productContainer.innerHTML = `
+                    <div class="recommendation-item urgent-item">
+                        ${result.product_note}
+                    </div>
+                `;
+            } 
+            else if (result.products && Array.isArray(result.products) && result.products.length > 0) {
+                displayProducts(result.products);
+            } 
+            else {
+                productContainer.innerHTML = `
+                    <div class="recommendation-item">
+                        No product suggestions available for this condition.
+                    </div>
+                `;
+            }
+        
             // Show results
             resultSection.style.display = 'block';
             resultSection.scrollIntoView({ behavior: 'smooth' });
@@ -1291,6 +1295,36 @@
                     container.appendChild(div);
                 });
             }
+        }
+
+        function displayProducts(products) {
+            const container = document.getElementById('productSection');
+            container.innerHTML = '';
+        
+            if (!products || products.length === 0) {
+                container.innerHTML = `
+                    <div class="recommendation-item">
+                        No product suggestions available for this condition.
+                    </div>
+                `;
+                return;
+            }
+        
+            products.forEach(product => {
+                const div = document.createElement('div');
+                div.className = 'product-card';
+        
+                div.innerHTML = `
+                    <img src="${product.image}" alt="Product Image">
+                    <h4>${product.name}</h4>
+                    <div class="product-price">${product.price || ''}</div>
+                    <a href="${product.link}" target="_blank">
+                        <button class="buy-btn">Buy Now</button>
+                    </a>
+                `;
+        
+                container.appendChild(div);
+            });
         }
     </script>
 </body>
