@@ -13,7 +13,7 @@ const error = document.getElementById('error');
 const resultsSection = document.getElementById('resultsSection');
 
 // API Configuration
-const API_BASE = "https://dermatologist-assistant-w6o3.onrender.com";
+const API_BASE = "https://dermatologist-assistant-lej1.onrender.com";
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', initializeApp);
